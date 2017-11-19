@@ -4,16 +4,27 @@ import urllib.request as req
 from classifier import is_hotdog
 
 apikey = open("apikey").read()
+intro_video_link = "https://www.youtube.com/watch?v=ACmydtFDTGs"
 
-def process_message(bot, msg):
-    if len(msg.photo) > 0:
-        f = bot.getFile(max(msg.photo, key=lambda p:p.file_size).file_id)
-        img = req.urlopen(f.file_path).read()
-        answer = "Hotdog" if is_hotdog(img) else "Not hotdog"
-        bot.sendMessage(msg.chat.id, answer)
+def process_command(bot, msg, command, *args):
+    if command == "start" or command == "help":
+        bot.sendMessage(msg.chat.id, intro_video_link);
+
+def process_photo(bot, msg):
+    bot.sendMessage(msg.chat.id, "Evaluating...")
+    f = bot.getFile(max(msg.photo, key=lambda p:p.file_size).file_id)
+    img = req.urlopen(f.file_path).read()
+    answer = "Hotdog" if is_hotdog(img) else "Not hotdog"
+    bot.sendMessage(msg.chat.id, answer)
         
 def handle_update(bot, update):
-    process_message(bot, update.message)
+    msg = update.message
+    if msg.text != None and msg.text[0] == '/':
+        argsparts = msg.text[1:].split(' ')
+        process_command(bot, msg, argsparts[0], *argsparts[1:])
+    else:
+        process_photo(bot, msg)
+        
     return int(update["update_id"])
     
 if __name__ == "__main__":
